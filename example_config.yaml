@@ -1,0 +1,24 @@
+from:
+  mail: gmail-id@gmail.com
+  password: Super Secret Password
+  subject: LinkedIn data scrape for the day
+
+to:
+  mail:
+    - mail1@gmail.com
+    - mail2@gmail.com
+
+url:
+  # of the form domain name: link
+  DA: https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=data%20analyst&location=India
+  DS: https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=data%20science&location=India
+  BA: https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=business%20analyst&location=India
+  FSD: https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=web%20developer&location=India
+  PM: https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=product%20manager&location=India
+  SD: https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=software%20developer&location=India
+  HR Recruitment:  https://www.linkedin.com/jobs/search/?keywords=Hr%20Recruitment&location=Bengaluru%2C%20Karnataka%2C%20India&locationId=&geoId=105214831&f_TPR=r86400&f_E=3%2C4%2C
+
+parse_config:
+  pages: 15
+  base_delay: 4
+
