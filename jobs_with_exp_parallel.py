@@ -15,15 +15,30 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+import yaml
 
-
+# -------------------------------------------------------------
+#                          Configs
+# -------------------------------------------------------------
 scrape_time = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
+with open('config.yaml','r') as file:
+    tmp = yaml.safe_load(file)
+
+URLs = tmp["url"]
+pages = tmp["parse_config"]["pages"]
+base_delay = tmp["parse_config"]["base_delay"]
+
+send_from = tmp["from"]["mail"]
+send_password = tmp["from"]["password"]
+send_subject = tmp["from"]["subject"]
+
+send_to = tmp["to"]["mail"]
+
+# -------------------------------------------------------------
 
 # For mailer
-def send_email(send_to, subject, df, file_name):
-    send_from = "ams.mailer.1@gmail.com"
-    password = "zaudiemkclttfmbo"
+def send_email(df, file_name, send_from = send_from, password = send_password, send_to = send_to, subject = send_subject):
     message = f"""\
     <p><strong>Data for the day {scrape_time}&nbsp;</strong></>
     <p><br></p>
@@ -33,7 +48,7 @@ def send_email(send_to, subject, df, file_name):
         multipart = MIMEMultipart()
         multipart["From"] = send_from
         multipart["To"] = receiver
-        multipart["Subject"] = subject  
+        multipart["Subject"] = subject
         attachment = MIMEApplication(df.to_csv())
         attachment["Content-Disposition"] = 'attachment; filename=" {}"'.format(f"{file_name}.csv")
         multipart.attach(attachment)
@@ -44,20 +59,12 @@ def send_email(send_to, subject, df, file_name):
         server.quit()
 
 
-
-
-
-
-
-
-
 with open("user-agents.txt", "r") as text_file:
      user_agents = text_file.readlines()
 
 
-
 class to_df:
-    
+
     list_cls__ = "jobs-search__results-list"
     title_cls__ = "base-search-card__title"
     company_cls__ = "base-search-card__subtitle"
@@ -67,18 +74,18 @@ class to_df:
 #     link_cls__ = "base-search-card__info"
     link_cls__ = "base-card__full-link absolute top-0 right-0 bottom-0 left-0 p-0 z-[2]"
     base_card_cls__ = "base-card relative w-full hover:no-underline focus:no-underline base-card--link base-search-card base-search-card--link job-search-card"
-    
-    
-    
+
+
+
     def __init__(self,html):
         self.soup  = BeautifulSoup(html, 'lxml')
-        
+
     def get_search_col(self):
         return self.soup.find_all(class_ = to_df.list_cls__)
-    
+
     def get_cards(self):
         return self.soup.find_all(class_ = to_df.base_card_cls__)
-    
+
     def get_roles(self,x):
 #         expects HTML of list_cls__
 #         return [i.text.strip() for i in self.soup.find_all(class_ = to_df.title_cls__)]
@@ -87,15 +94,15 @@ class to_df:
     def get_companies(self,x):
 #         return [i.text.strip() for i in self.soup.find_all(class_ = to_df.company_cls__)]
         return self.handle_empty(x.find(class_ = to_df.company_cls__)).text.strip()
-    
+
     def get_locs(self,x):
 #         return [i.text.strip() for i in self.soup.find_all(class_ = to_df.loc_cls__)]
         return self.handle_empty(x.find(class_ = to_df.loc_cls__)).text.strip()
-    
+
     def get_time(self,x):
 #         return [i.text.strip() for i in self.soup.find_all(class_ = [to_df.time_cls__, to_df.time_cls2__])]
         return self.handle_empty(x.find(class_ = [to_df.time_cls__, to_df.time_cls2__])).text.strip()
-            
+
     def get_links(self,x):
 #         return [i['href'] for i in self.soup.find_all(class_ = to_df.link_cls__, href=True)]
 #         return [ i['href'] for i in conv.get_search_col()[0].find_all(class_ = to_df.base_card_cls__ , href = True) ]
@@ -103,16 +110,16 @@ class to_df:
 #         return self.handle_empty(x.find(class_ = to_df.link_cls__ , href = True)).text.strip()
 #         return self.handle_empty(x.find(class_ = to_df.link_cls__ , href = True))
         tmp = x.find('a')
-    
+
         if tmp is None:
 #             return "NA"
             return np.nan
-        
+
         else:
-            
+
             return self.handle_empty(str(tmp['href']))
 #         return self.handle_empty(x.find('a', href = True))
-            
+
     def handle_empty(self, x):
         if x is None:
             return np.nan
@@ -120,10 +127,10 @@ class to_df:
         if x == "":
             return np.nan
 #             return "NA"
-        
+
         return x
 #         return x if x != "" or x is not None else "NA"
-    
+
     def process_cards(self):
         lis = []
         for i in self.get_cards():
@@ -136,9 +143,9 @@ class to_df:
                 self.get_time(i),
                 self.get_links(i)
             ])
-    
+
         return lis
-        
+
     def get_df(self):
 #         return pd.DataFrame({
 #             'role': self.get_roles(),
@@ -159,15 +166,15 @@ class scrape_exp:
     text_class2__ = "show-more-less-html__markup"
     base_delay__ = 4
 
-    
+
     def __init__(self,df):
         self.df = df
-        
+
     def pattern(self):
         return re.compile(scrape_exp.regex__, flags=re.IGNORECASE)
-        
+
     def get_exp(self, URL):
-        
+
 #         headers = {
 #             'Accept': '*/*',
 #             'Accept-Encoding': 'gzip, deflate, br',
@@ -186,47 +193,47 @@ class scrape_exp:
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
         }
-        
+
         r = requests.get(URL,
                          allow_redirects=True,
                          headers=headers
                         )
-        
+
 #         with open('file.html', 'w') as file:
 #             file.write(r.text)
 
         soup = BeautifulSoup(r.content, 'lxml')
         text = self.text_with_newlines(soup.find(class_ = scrape_exp.text_class2__))
-        
+
         text = re.sub(scrape_exp.re_spl_char__, "", text)
-        
+
 #         with open('file.text', 'w') as file:
 #             file.write(text)
 
 #         self.exp = self.handle_empty_list(list(set(re.findall(scrape_exp.regex__, string=text))))
 #         print(self.exp)
-        
+
 
         pattern = self.pattern()
         res = pattern.findall(text)
-        
+
         # print(res)
         return ", ".join(res).strip()
-        
-        
+
+
 #         res = list(set(itertools.chain(*res)))
 #         try:
 #             res.remove('')
 #         except ValueError:
 #             pass
-        
+
 #         self.exp = self.handle_empty_list(res)
-        
+
 #         self.exp = self.handle_list(self.exp)
-        
+
 #         return self.exp
-    
-        
+
+
     def text_with_newlines(self, elem):
         text = ''
         try:
@@ -238,58 +245,39 @@ class scrape_exp:
             return text
         except Exception as E:
             return text
-        
-        
+
+
     def handle_empty_list(self, lis):
-        
+
         if len(lis) == 0:
             return ["NA"]
         else:
             return lis
-        
+
     def handle_list(self, lis):
         return " ".join(lis).strip()
-    
+
     def tmp(self, idx,row):
         time.sleep(scrape_exp.base_delay__+random.random())
         return [idx, self.get_exp(row["link"])]
 #         return [kvp[0] , self.get_exp(kvp[1]["link"])]
-    
+
     def apply(self):
-        
+
         exp_lis = Parallel(n_jobs=-1)(delayed(self.tmp)(idx,row) for idx,row in self.df.iterrows())
-        
+
 #         return exp_lis
-        
+
 #         exp_lis = []
 #         for idx, row in self.df.iterrows():
-            
+
 #             exp_lis.append([idx, self.get_exp(row["link"])])
 #             time.sleep(scrape_exp.base_delay__+random.random())
 #         return exp_lis
-        
+
         exp_df = pd.DataFrame(exp_lis, columns=["idx","Experience"])
-        
+
         return exp_df.set_index("idx")
-        
-       
-URLs = {
-        "DA":"https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=data%20analyst&location=India",
-        "DS":"https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=data%20science&location=India",
-        "BA":"https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=business%20analyst&location=India",
-        "FSD":"https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=web%20developer&location=India",
-        "PM":"https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=product%20manager&location=India",
-        "SD":"https://www.linkedin.com/jobs/search/?f_E=1%2C2%2C3&f_TPR=r86400&geoId=102713980&keywords=software%20developer&location=India",
-    "HR Recruitment": "https://www.linkedin.com/jobs/search/?distance=25&f_E=3%2C4%2C6&f_JT=F&geoId=105214831&keywords=hr%20recruitment&location=Bengaluru%2C%20Karnataka%2C%20India"
-        }
-pages = 15
-base_delay = 4
-
-
-
-
-
-
 
 headers = {
         "User-Agent":random.choice(user_agents).strip(),
@@ -309,24 +297,22 @@ def df_from_url(headers, domain, URL):
                      allow_redirects=True,
                      headers = headers
                     )
-    
-    conv = to_df(r.content)
-    with open('file.html', 'w') as file:
-        file.write(r.text)
 
-    
+    conv = to_df(r.content)
+    # with open('file.html', 'w') as file:
+    #     file.write(r.text)
+
+
     try:
         df = conv.get_df()
         df = df.assign(Domain = domain)
-        
+
     except Exception as E:
         print(f"Something happned for {domain} {URL}")
         print(traceback.format_exc())
-        return 
-        
-    return df
-    
+        return
 
+    return df
 
 
 def data_for_domain(domain, Base_URL, pages, base_delay = base_delay):
@@ -340,25 +326,25 @@ def data_for_domain(domain, Base_URL, pages, base_delay = base_delay):
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
         }
-    
+
     df = pd.DataFrame()
     for idx in range(pages):
         URL = Base_URL + f"&start={25*idx}"
-        
+
         tmp_df = df_from_url(headers, domain, URL)
-        
+
         if len(tmp_df) == 0:
             print(f"Done at page {idx+1}")
             break
-        
+
         df = pd.concat([df,tmp_df], axis =0 , ignore_index=True)
         time.sleep(base_delay+random.random())
-    
-    
+
+
     df = df.drop_duplicates(subset=["role","company","location"]).reset_index(drop=True)
 
     return df.dropna()
-            
+
 
 
 print("Starting to scrape jobs...")
@@ -370,12 +356,6 @@ print("Done Scraping jobs...")
 df = pd.concat(lis, axis=0, ignore_index=True).reset_index(drop=True)
 df = df.assign(scraped = scrape_time)
 
-
-# print("Saving this data to csv file...")
-# df.to_csv(f"linkedin_jobs_{scrape_time}_AllDomains.csv", index=False)
-# print("Done.\n\n")
-
-
 print("Scraping experience...")
 scrape = scrape_exp(df)
 
@@ -383,10 +363,10 @@ df_scrape = scrape.apply()
 print("Done..")
 
 
-# print("Saving to csv file...")
-# df.join(df_scrape).to_csv(f"linkedin_jobs_{scrape_time}_EXPERIENCE_AllDomains.csv", index=False)
-# print("Done.")
+print("Saving to csv file...")
+df.join(df_scrape).to_csv(f"Archive/linkedin_jobs_{scrape_time}_EXPERIENCE_AllDomains.csv", index=False)
+print("Done.")
 
 
 print("Sending over mail")
-send_email(['ams.mailer.1@gmail.com'],f'LinkedIn Scrape: {scrape_time}',df.join(df_scrape), f"linkedin_jobs_{scrape_time}_EXPERIENCE_AllDomains.csv")
+send_email(df.join(df_scrape), f"linkedin_jobs_{scrape_time}_EXPERIENCE_AllDomains.csv")
