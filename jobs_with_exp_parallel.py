@@ -364,9 +364,10 @@ print("Done..")
 
 
 print("Saving to csv file...")
-df.join(df_scrape).to_csv(f"Archive/linkedin_jobs_{scrape_time}_EXPERIENCE_AllDomains.csv", index=False)
+df.join(df_scrape).to_csv(f"Archive/linkedin_jobs_{scrape_time}.csv", index=False)
 print("Done.")
 
 
-print("Sending over mail")
-send_email(df.join(df_scrape), f"linkedin_jobs_{scrape_time}_EXPERIENCE_AllDomains.csv")
+if send_to != None:
+    print("Sending over mail")
+    send_email(df.join(df_scrape), f"linkedin_jobs_{scrape_time}.csv")
