@@ -166,3 +166,4 @@ cython_debug/
 config.yaml
 LinkedIn-Scraper-Mailer.sh
 .virtual_documents
+Archive/
