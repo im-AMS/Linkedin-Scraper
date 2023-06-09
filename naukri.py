@@ -68,25 +68,20 @@ class Scrape_jobIds:
         response = requests.get(
             "https://www.naukri.com/jobapi/v3/search",
             params=self.params,
-            # cookies=cookies,
             headers=self.headers,
         )
         return (response, response.text)
 
     def get_jobId(self):
-        # log.info("Scraping jobIds")
+        log.info("Scraping jobIds")
         resp_code, resp = self._scrape()
         # with open("api_data.json", "w") as f:
         #     f.write(resp)
 
         resp_dict = json.loads(resp)
-        # resp_dot = dotdict(resp)
-        print(resp_code)
         jobId_parser = parse("$.jobDetails[*].jobId")
-        # num_jobs_parser = parse("$.noOfJobs")
         log.info(f"Returned code {resp_code}, returned { resp_dict['noOfJobs'] } jobs")
         return [match.value for match in jobId_parser.find(resp_dict)]
-        # return [tmp["jobId"] for tmp in resp_dot.jobDetails]
 
 
 @dataclass
