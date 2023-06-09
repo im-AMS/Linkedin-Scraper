@@ -1,13 +1,16 @@
 import json
 import logging as log
+import os
 import random
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from pprint import pprint
 from typing import List
 
 import pandas as pd
 import requests
+import yaml
+from joblib import Parallel, delayed
 from jsonpath_ng import parse
 
 
@@ -241,29 +244,44 @@ class Scrape_details:
             return self.__get_detail_from_list_jobId(jobId)
 
 
-# Set logging
-log.basicConfig(
-    format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d - %(message)s",
-    level=log.INFO,
-)
+def naukri():
+    with open("config.yaml", "r") as file:
+        tmp = yaml.safe_load(file)
 
-# Create class instance and scrape get the list of jobIds
-jobid_scraper = Scrape_jobIds()
-jobids = jobid_scraper.get_jobId()
-log.info(f"list of jobIds: {jobids}.\nGot {len(jobids)} jobids")
+    save_path = tmp["save_path"]
+    naukri_save_path = f"{save_path}/{date.today().strftime('%Y-%m-%d')}"
+    scrape_time = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
-# Create class instance and scrape the job details for each jobIds
-details_scraper = Scrape_details()
-details_list = details_scraper.get_details(jobids)
+    # Set logging
+    log.basicConfig(
+        format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d - %(message)s",
+        level=log.INFO,
+    )
 
-# remove none values form list, some JobIds dont display on naukri portal,
-# it gets redirected, hence the output will be None
-details_list = list(filter(lambda value: value is not None, details_list))
+    # Create class instance and scrape get the list of jobIds
+    jobid_scraper = Scrape_jobIds()
+    jobids = jobid_scraper.get_jobId()
+    log.info(f"list of jobIds: {jobids}.\nGot {len(jobids)} jobids")
 
-# create a DataFrame with the details
-df = pd.DataFrame(details_list)
-log.debug(f"{df}")
+    # Create class instance and scrape the job details for each jobIds
+    details_scraper = Scrape_details()
+    details_list = details_scraper.get_details(jobids)
 
-# export data
-df.to_csv("naukri.csv", index=False)
-log.info(f"Done")
+    # remove none values form list, some JobIds dont display on naukri portal,
+    # it gets redirected, hence the output will be None
+    details_list = list(filter(lambda value: value is not None, details_list))
+
+    # create a DataFrame with the details
+    df = pd.DataFrame(details_list)
+    # log.debug(f"{df}")
+
+    # export data
+    if not os.path.exists(naukri_save_path):
+        os.makedirs(naukri_save_path)
+
+    df.to_csv(
+        f"{naukri_save_path}/naukri_{scrape_time}.csv",
+        index=False,
+    )
+    log.info(f"Done")
+    return df
