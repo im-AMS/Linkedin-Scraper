@@ -25,3 +25,19 @@ linkedin:
     pages: 15
     base_delay: 4
 
+naukri:
+  profiles:
+    BA:
+      params:
+        noOfResults: 5
+        urlType: search_by_keyword
+        searchType: adv
+        keyword: business analyst
+        pageNo: 1
+        experience: 0
+        k: business analyst
+        experience: 0
+        seoKey: business-analyst-jobs
+        src: jobsearchDesk
+        latLong:
+

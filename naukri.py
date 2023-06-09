@@ -21,7 +21,7 @@ class Scrape_jobIds:
     even more information about each of the drive and can be accessed by passing jobId
     """
 
-    def __init__(self, user_agent_file="./user-agents.txt"):
+    def __init__(self, params, user_agent_file="./user-agents.txt"):
         log.basicConfig(
             format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d - %(message)s",
             level=log.INFO,
@@ -47,22 +47,8 @@ class Scrape_jobIds:
             "Sec-Fetch-Site": "same-origin",
         }
 
-        self.params = [
-            ("noOfResults", "50"),
-            ("urlType", "search_by_keyword"),
-            ("searchType", "adv"),
-            ("keyword", "data analyst"),
-            ("sort", "f"),
-            ("pageNo", "1"),
-            ("experience", "0"),
-            ("jobAge", "3"),
-            ("k", "data analyst"),
-            ("experience", "0"),
-            ("jobAge", "3"),
-            ("seoKey", "data-analyst-jobs"),
-            ("src", "sortby"),
-            ("latLong", ""),
-        ]
+        self.params = params
+        log.info(f"searching with params as\n{self.params}")
 
     def _scrape(self):
         response = requests.get(
@@ -239,14 +225,7 @@ class Scrape_details:
             return self.__get_detail_from_list_jobId(jobId)
 
 
-def naukri():
-    with open("config.yaml", "r") as file:
-        tmp = yaml.safe_load(file)
-
-    save_path = tmp["save_path"]
-    naukri_save_path = f"{save_path}/{date.today().strftime('%Y-%m-%d')}"
-    scrape_time = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
-
+def naukri_single_param(params, profile):
     # Set logging
     log.basicConfig(
         format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d - %(message)s",
@@ -254,7 +233,7 @@ def naukri():
     )
 
     # Create class instance and scrape get the list of jobIds
-    jobid_scraper = Scrape_jobIds()
+    jobid_scraper = Scrape_jobIds(params)
     jobids = jobid_scraper.get_jobId()
     log.info(f"list of jobIds: {jobids}.\nGot {len(jobids)} jobids")
 
@@ -268,7 +247,29 @@ def naukri():
 
     # create a DataFrame with the details
     df = pd.DataFrame(details_list)
+    df = df.assign(profile_name=profile)
+    print(df)
     # log.debug(f"{df}")
+
+    log.info(f"Done for {params}")
+    return df
+
+
+def naukri():
+    scrape_time = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+    with open("config.yaml", "r") as file:
+        tmp = yaml.safe_load(file)
+
+    save_path = tmp["save_path"]
+    naukri_save_path = f"{save_path}/{date.today().strftime('%Y-%m-%d')}"
+
+    profiles = tmp["naukri"]["profiles"]
+
+    df = Parallel(n_jobs=1, verbose=10)(
+        delayed(naukri_single_param)(param["params"], profile)
+        for profile, param in profiles.items()
+    )
+    df = pd.concat(df)
 
     # export data
     if not os.path.exists(naukri_save_path):
@@ -278,5 +279,4 @@ def naukri():
         f"{naukri_save_path}/naukri_{scrape_time}.csv",
         index=False,
     )
-    log.info(f"Done")
     return df
