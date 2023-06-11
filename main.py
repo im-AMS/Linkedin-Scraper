@@ -54,7 +54,7 @@ except Exception as e:
     error_message = f"{error_message}Naukri Failed!!!\n{e}\n"
 
 if len(error_message) == 0:
-    log.info(f"Sending Error message to dev, {dev_mail}")
+    log.info(f"Sending scraped data")
     send_email_with_df(
         dataframes,
         file_names,
@@ -63,10 +63,10 @@ if len(error_message) == 0:
         send_to,
         send_subject,
     )
-    log.info(f"Sent mail to dev, killing myself to be fixed soon!")
+    log.info(f"Sent data. Good Bye for now!")
 
 else:
-    log.info(f"Sending scraped data")
+    log.info(f"Sending Error message to dev, {dev_mail}")
     send_email(
         send_from,
         send_password,
@@ -74,4 +74,4 @@ else:
         f"{date.today().strftime('%B %d, %Y')} Scrape Failed",
         error_message,
     )
-    log.info(f"Sent data. Good Bye for now!")
+    log.info(f"Sent mail to dev, killing myself to be fixed soon!")
