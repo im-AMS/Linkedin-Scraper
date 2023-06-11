@@ -4,3 +4,4 @@ jsonpath_ng==1.5.3
 pandas==1.4.2
 PyYAML==6.0
 Requests==2.31.0
+lxml==4.9.2
